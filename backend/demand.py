@@ -27,7 +27,6 @@ COLUMNS = [
 class DemandTable:
     def __init__(self):
         self.demands = {}
-
     
     def get_all_demand(self):
         return self.demands
@@ -45,6 +44,32 @@ class DemandTable:
     def get_df(self):
         data = [d.__dict__ for d in self.demands.values()]
         return pd.DataFrame.from_records(data)
+
+    def get_chart(self):
+        steps = 300
+        columns = []
+        data = [None] * steps
+        demand_data = [d.__dict__ for d in self.demands.values()]
+        for i in range(steps):
+            data[i] = []
+        
+        for dd in demand_data:
+            columns.append(dd.get("name"))
+            num_jobs = dd.get("num_jobs")
+            repeat_every = dd.get("repeat_every")
+            start_time = dd.get("start_time")
+            for i in range(steps):
+                if i < start_time:
+                    data[i].append(0)
+                elif repeat_every and (i-start_time) % repeat_every == 0:
+                    data[i].append(num_jobs)
+                else:
+                    data[i].append(0)
+
+
+
+                    
+        return pd.DataFrame(data, columns=columns)
         
 
 class Demand:
