@@ -1,6 +1,6 @@
 from enum import Enum
 
-class ActType:
+class ActType(Enum):
     # figure out FLOPS
     # include efficiency factor: 60%
     ML_TRAINING = 1

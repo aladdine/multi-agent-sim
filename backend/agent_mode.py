@@ -8,6 +8,7 @@ class AgentMode:
     ACTING = 5
     COMPLETING = 6
     WAITING = 7
-    TERMINATING = 8
-    PAUSED = 9
+    MOVING = 8
+    TERMINATING = 9
+    PAUSED = 10
 

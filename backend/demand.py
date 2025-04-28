@@ -1,6 +1,7 @@
 import uuid
 import pandas as pd
 import streamlit as st
+import demand_state
 
 WORK_TYPE = ["WORK"]
 HARDWARE_TYPES = ["CPU 1core", "CPU 16core", "GPU", "DPU", "ASIC"]
@@ -74,11 +75,12 @@ class DemandTable:
 
 class Demand:
 
-    def __init__(self, name, hardware_type, start_time, delayable, num_jobs, repeat_every, duration, power_consumption, heat_decipation):
+    def __init__(self, name, hardware_type, start, stop, delayable, num_jobs, repeat_every, duration, power_consumption, heat_decipation):
         self.id = uuid.uuid4().__str__()
         self.name = name
         self.hardware_type = hardware_type
-        self.start_time = start_time
+        self.start = start
+        self.stop = stop
         self.delayable = delayable
         self.num_jobs = num_jobs # TODO: convert this to auto-scaling
         self.repeat_every = repeat_every
@@ -110,11 +112,17 @@ class Demand:
     def setHardwareType(self, hardware_type):
         self.hardware_type = hardware_type
     
-    def getStartTime(self):
-        return self.start_time
+    def getStart(self):
+        return self.start
     
-    def setStartTime(self, start_time):
-        self.start_time = start_time
+    def setStart(self, start):
+        self.start = start
+    
+    def getStop(self):
+        return self.stop
+    
+    def setStop(self, stop):
+        self.stop = stop
 
     def getDelayable(self):
         return self.priority
@@ -169,3 +177,11 @@ class Demand:
 
     def setState(self, state):
         self.state = state
+    
+    def setPriod(self, start, duration):
+        self.start_time = start
+        self.duration = duration
+    
+    def reset(self):
+        self.start_time = 0
+        self.state = demand_state.DemandState.INACTIVE
