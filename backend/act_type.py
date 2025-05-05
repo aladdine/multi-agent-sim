@@ -1,5 +1,6 @@
 from enum import Enum
 
+# Activity types that demand is requesting.
 class ActType(Enum):
     # figure out FLOPS
     # include efficiency factor: 60%
@@ -9,3 +10,5 @@ class ActType(Enum):
     LAMBDA = 3 
     WEB_API = 4
     CRON_JOB = 5
+    STREAMING = 6
+    STORAGE = 7

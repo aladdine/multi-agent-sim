@@ -1,7 +1,8 @@
 from enum import Enum
 
 class SupplyState(Enum):
-    INACTIVE = 1
-    UNAVAILABLE = 2
-    AVAILABLE = 3
-    ACTIVE = 4
+    OFF = 1
+    IDLE = 2
+    UNAVAILABLE = 3
+    AVAILABLE = 4
+    ACTIVE = 5

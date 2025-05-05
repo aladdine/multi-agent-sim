@@ -2,6 +2,8 @@ import uuid
 import pandas as pd
 import streamlit as st
 import demand_state
+import act_type
+import demand_state
 
 WORK_TYPE = ["WORK"]
 HARDWARE_TYPES = ["CPU 1core", "CPU 16core", "GPU", "DPU", "ASIC"]
@@ -20,7 +22,8 @@ COLUMNS = [
     "delayable",
     "num_jobs",
     "repeat_every",
-    "duration",
+    "repeat_until",
+    "effort",
     "power_consumption",
     "heat_decipation"
 ]
@@ -58,6 +61,7 @@ class DemandTable:
             columns.append(dd.get("name"))
             num_jobs = dd.get("num_jobs")
             repeat_every = dd.get("repeat_every")
+            repeat_until = dd.get("repeat_until")
             start_time = dd.get("start_time")
             for i in range(steps):
                 if i < start_time:
@@ -75,20 +79,20 @@ class DemandTable:
 
 class Demand:
 
-    def __init__(self, name, hardware_type, start, stop, delayable, num_jobs, repeat_every, duration, power_consumption, heat_decipation):
+    def __init__(self, name, hardware_type, start_time, delayable, num_jobs, repeat_every, repeat_until, effort, power_consumption, heat_decipation):
         self.id = uuid.uuid4().__str__()
         self.name = name
         self.hardware_type = hardware_type
-        self.start = start
-        self.stop = stop
+        self.start_time = start_time
         self.delayable = delayable
         self.num_jobs = num_jobs # TODO: convert this to auto-scaling
         self.repeat_every = repeat_every
-        self.duration = duration # TODO: convert this to FLOPS
+        self.repeat_until = repeat_until
+        self.effort = effort # TODO: convert this to FLOPS
         self.power_consumption = power_consumption
         self.heat_decipation = heat_decipation
-        self.act_type = None
-        self.state = None
+        self.act_type = act_type.ActType.WEB_API
+        self.state = demand_state.DemandState.INACTIVE
         
         # self.cores = 8 
         # for gpus SMs: streaming multi-processor.
@@ -142,11 +146,17 @@ class Demand:
     def setRepeatEvery(self, repeat_every):
         self.repeat_every = repeat_every
     
-    def getDuration(self):
-        return self.duration
+    def getRepeatUntil(self):
+        return self.repeat_until
 
-    def setDuration(self, duration):
-        self.duration = duration
+    def setRepeatUntil(self, repeat_until):
+        self.repeat_until = repeat_until
+    
+    def getEffort(self):
+        return self.effort
+
+    def setEffort(self, effort):
+        self.effort = effort
     
     def getPowerConsumption(self):
         return self.power_consumption
@@ -178,9 +188,15 @@ class Demand:
     def setState(self, state):
         self.state = state
     
-    def setPriod(self, start, duration):
+    def isActive(self, now):
+        if self.repeat_every:
+            return now >= self.start_time and now <= self.repeat_until
+        else:
+            return now >= self.start_time and now <= (self.start_time + self.effort)
+    
+    def setPriod(self, start, end):
         self.start_time = start
-        self.duration = duration
+        self.repeat_until = end
     
     def reset(self):
         self.start_time = 0

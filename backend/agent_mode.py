@@ -1,6 +1,6 @@
 from enum import Enum
 
-class AgentMode:
+class AgentMode(Enum):
     OFF = 1
     IDLE = 2
     OBSERVING = 3
