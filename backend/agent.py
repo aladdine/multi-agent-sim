@@ -1,10 +1,10 @@
 import uuid
 import pandas as pd
 import random
-from agent_mode import AgentMode
-from demand_state import DemandState
-from act import Act
-from act_state import ActState
+from .agent_mode import AgentMode
+from .demand_state import DemandState
+from .act import Act
+from .act_state import ActState
 
 
 class ClusterTable:
@@ -183,7 +183,7 @@ class Agent:
                 offset = self.get_random_demand(self.demands, DemandState.ACTIVE)
             for n in range(len(self.demands)):
                 d = self.demands[(n+offset) % len(self.demands)]
-                if d.state != DemandState.ACTIVE
+                if d.state != DemandState.ACTIVE:
                     continue
                 s = self.match(d)
                 if s:

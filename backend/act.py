@@ -1,4 +1,4 @@
-from act_state import ActState
+from .act_state import ActState
 
 class Act:
     def __init__(self, agent, supply, demand, start, end, effort, success, act_state):

@@ -1,9 +1,10 @@
 import time
 import streamlit as st
 import pandas as pd
-from backend import demand, agent
+import backend.demand as demand
+import backend.agent as agent
+import backend.demand_type as demand_type
 import numpy as np
-
 
 
 if 'demand_table' not in st.session_state:
@@ -20,33 +21,32 @@ else:
 
 def main():
     
-    st.title("Agent-Based Simulation for Data Center Strategies")
+    st.title("Agent-Based Simulation for Cloud Strategies")
 
     st.header("Workloads")
     name = st.text_input("Name")
-    hardware_type = st.segmented_control(
-        "Hardware Type", demand.HARDWARE_TYPES, selection_mode="single"
+    workload_type = st.segmented_control(
+        "Workload Type", [dt.name.replace("_"," ") for dt in demand_type.DemandType], selection_mode="single"
     )
-    start_time = st.number_input("Start Time (sec)", step=1, min_value=1)
-    delayable = st.checkbox("Delayable")
-    num_of_jobs = st.number_input("Number of Jobs", step=1, min_value=1)
+    start_time = st.number_input("Start Time (sec)", step=1, min_value=0)
+    num_of_instances = st.number_input("Number of Instances", step=1, min_value=1)
     repeat_every = st.number_input("Repeat Every (sec)", step=1, min_value=0)
+    repeat_until = st.number_input("Repeat Until (sec)", step=1, min_value=0)
     duration = st.number_input("Duration (sec)", step=1, min_value=1)
-    power_consumption = st.number_input("Power Consumption (W)", step=1, min_value=0)
-    heat_decipation = st.number_input("Heat Decipation (W)", step=1, min_value=0)
-
+    memory_gib =  st.number_input("Memory (GiB)", step=1, min_value=1)
+    vcpus = st.number_input("vCPUs", step=2, min_value=2)
 
     if st.button("Add Workload!"):
         new_demand = demand.Demand(
             name=name,
-            hardware_type=hardware_type,
+            workload_type=workload_type,
             start_time=start_time,
-            delayable=delayable,
-            num_jobs=num_of_jobs,
+            num_of_instances=num_of_instances,
             repeat_every=repeat_every,
+            repeat_until=repeat_until,
             duration=duration,
-            power_consumption=power_consumption,
-            heat_decipation=heat_decipation
+            memory_gib=memory_gib,
+            vcpus=vcpus
         )
 
         demand_table.add_demand(new_demand)
@@ -60,10 +60,10 @@ def main():
             demand_table.get_df()
         )
 
-    st.header("Clusters")
-    cluster_name = st.text_input("Cluster Name")
+    st.header("Compute Resources")
+    resource_name = st.text_input("Resource Name")
     cluster_hardware_type = st.segmented_control(
-        "Cluster Hardware Type", demand.HARDWARE_TYPES, selection_mode="single", key="cluster_hardware_type"
+        "Cluster Hardware Type", ["demand.HARDWARE_TYPES"], selection_mode="single", key="cluster_hardware_type"
     )
     cluster_size = st.number_input("Cluster Size (# of servers)", min_value=1, step=1)
     failure_rate = st.number_input("Failure Rate")
@@ -86,10 +86,24 @@ def main():
             cluster_table.get_df()
         )
     
-    st.header("Run Simulation")
-    scheduling_algorithm = st.segmented_control(
-        "Scheduling Algorithm", ["FIFO (throughput)", "Power Efficient (Power Capping)", "Power Efficient (Load Stacking)"], selection_mode="single", key="scheduling_algorithm"
-    )  
+    st.header("Agents (Teams)")
+    eng_team_name = st.text_input("Team Name")
+    team_scope = st.segmented_control(
+        "Team Scope", ["AI R&D", "AI Production", "Apps", "Internal IT"], selection_mode="single", key="eng_team_scope"
+    )
+    
+    if st.button("Add Team!"):
+        pass
+
+    st.header("Strategy")
+    strategy = st.segmented_control(
+        "Strategy", ["Cost Cutting", "AI First", "Apps First", "Bottom Up"], selection_mode="single", key="strategy"
+    )
+    
+    if st.button("Add Strategy!"):
+        pass
+    
+    st.header("Run Simulation")  
     st.button("Run!")
 
 if __name__ == "__main__":

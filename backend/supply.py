@@ -1,5 +1,6 @@
 import uuid
-import act_type, act_state
+from .act_type import ActType
+from .act_state import ActState
 
 class Supply:
     def __init__(self, name, supply_state, capacity, efficiency, start, stop, recur, every, until, err_rate):
@@ -9,7 +10,7 @@ class Supply:
         self.capacity = capacity
         self.efficiency = efficiency
 
-        self.act_type = act_type.ActType.WEB_API
+        self.act_type = ActType.WEB_API
         
         self.start = start
         self.stop = stop

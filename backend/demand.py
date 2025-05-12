@@ -1,19 +1,9 @@
 import uuid
 import pandas as pd
 import streamlit as st
-import demand_state
-import act_type
-import demand_state
+from .demand_state import DemandState
+from .act_type import ActType
 
-WORK_TYPE = ["WORK"]
-HARDWARE_TYPES = ["CPU 1core", "CPU 16core", "GPU", "DPU", "ASIC"]
-
-DEFAULTS = {
-    "TYPE": WORK_TYPE[0],
-    "HARDWARE_TYPES": HARDWARE_TYPES[0],
-    "NUMBER_OF_JOBS": 1,
-    "PRIORITY": 0
-}
 
 COLUMNS = [
     "name",
@@ -31,6 +21,7 @@ COLUMNS = [
 class DemandTable:
     def __init__(self):
         self.demands = {}
+        self.sorted_demands = []
     
     def get_all_demand(self):
         return self.demands
@@ -39,8 +30,7 @@ class DemandTable:
         return self.demands.get(id)
     
     def add_demand(self, demand):
-        self.demands[demand.getId()] = demand
-        print("self", self.demands)
+        self.demands[demand.id] = demand
     
     def remove_demand(self, demand_id):
         del self.demands[demand_id] 
@@ -59,145 +49,65 @@ class DemandTable:
         
         for dd in demand_data:
             columns.append(dd.get("name"))
-            num_jobs = dd.get("num_jobs")
+            num_of_instances = dd.get("num_of_instances")
             repeat_every = dd.get("repeat_every")
             repeat_until = dd.get("repeat_until")
             start_time = dd.get("start_time")
-            for i in range(steps):
+            duration = dd.get("duration")
+            curr_duration = duration
+            for i in range(repeat_until):
+                
                 if i < start_time:
                     data[i].append(0)
-                elif repeat_every and (i-start_time) % repeat_every == 0:
-                    data[i].append(num_jobs)
+                    break
+                if i == start_time:
+                    data[i].append(num_of_instances)
+                    continue
+                if repeat_every == 0:
+                    break
+                if (i-start_time) % repeat_every == 0:
+                    curr_duration = duration
+                    data[i].append(num_of_instances)
                 else:
                     data[i].append(0)
 
+                if curr_duration > 1:
+                    data[i][-1] = data[i][-1] + num_of_instances
+                    curr_duration = curr_duration - 1
 
-
-                    
+        print("data", data)
         return pd.DataFrame(data, columns=columns)
         
 
 class Demand:
 
-    def __init__(self, name, hardware_type, start_time, delayable, num_jobs, repeat_every, repeat_until, effort, power_consumption, heat_decipation):
+    def __init__(self, name, workload_type, start_time, num_of_instances, 
+                 repeat_every, repeat_until, duration, memory_gib, vcpus):
+
         self.id = uuid.uuid4().__str__()
         self.name = name
-        self.hardware_type = hardware_type
+        self.workload_type = workload_type
         self.start_time = start_time
-        self.delayable = delayable
-        self.num_jobs = num_jobs # TODO: convert this to auto-scaling
+        self.num_of_instances = num_of_instances
         self.repeat_every = repeat_every
         self.repeat_until = repeat_until
-        self.effort = effort # TODO: convert this to FLOPS
-        self.power_consumption = power_consumption
-        self.heat_decipation = heat_decipation
-        self.act_type = act_type.ActType.WEB_API
-        self.state = demand_state.DemandState.INACTIVE
-        
-        # self.cores = 8 
-        # for gpus SMs: streaming multi-processor.
-        self.memory_mb = 40
-        self.storage_mb = 500
-        self.replicas = 2
+        self.duration = duration
+        self.memory_gib = memory_gib
+        self.vcpus = vcpus
+        self.act_type = ActType.PROCESS
+        self.state = DemandState.INACTIVE
 
     
-    def getId(self):
-        return self.id
-
-    def getName(self):
-        return self.name
-
-    def setName(self, name):
-        self.name = name
-    
-    def getHardwareType(self):
-        return self.hardware_type
-    
-    def setHardwareType(self, hardware_type):
-        self.hardware_type = hardware_type
-    
-    def getStart(self):
-        return self.start
-    
-    def setStart(self, start):
-        self.start = start
-    
-    def getStop(self):
-        return self.stop
-    
-    def setStop(self, stop):
-        self.stop = stop
-
-    def getDelayable(self):
-        return self.priority
-
-    def setDelayable(self, delayable):
-        self.priority = delayable
-    
-    def getNumJobs(self):
-        return self.num_jobs
-
-    def setNumJobs(self, num_jobs):
-        self.num_jobs = num_jobs
-
-    def getRepeatEvery(self):
-        return self.repeat_every
-
-    def setRepeatEvery(self, repeat_every):
-        self.repeat_every = repeat_every
-    
-    def getRepeatUntil(self):
-        return self.repeat_until
-
-    def setRepeatUntil(self, repeat_until):
-        self.repeat_until = repeat_until
-    
-    def getEffort(self):
-        return self.effort
-
-    def setEffort(self, effort):
-        self.effort = effort
-    
-    def getPowerConsumption(self):
-        return self.power_consumption
-
-    def setPowerConsumption(self, power_consumption):
-        self.power_consumption = power_consumption
-    
-    def getPowerConsumption(self):
-        return self.power_consumption
-
-    def setPowerConsumption(self, power_consumption):
-        self.power_consumption = power_consumption
-    
-    def getHeatDecipation(self):
-            return self.heat_decipation
-
-    def setHeatDecipation(self, heat_decipation):
-        self.heat_decipation = heat_decipation
-
-    def getActType(self):
-        return self.act_type
-
-    def setActType(self, act_type):
-        self.act_type = act_type
-    
-    def getState(self):
-        return self.state
-
-    def setState(self, state):
-        self.state = state
-    
-    def isActive(self, now):
+    def is_active(self, now):
         if self.repeat_every:
             return now >= self.start_time and now <= self.repeat_until
         else:
-            return now >= self.start_time and now <= (self.start_time + self.effort)
+            return now >= self.start_time and now <= (self.start_time + self.duration)
     
-    def setPriod(self, start, end):
+    def set_period(self, start, end):
         self.start_time = start
         self.repeat_until = end
     
     def reset(self):
         self.start_time = 0
-        self.state = demand_state.DemandState.INACTIVE
+        self.state = DemandState.INACTIVE

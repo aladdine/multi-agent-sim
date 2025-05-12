@@ -1,4 +1,4 @@
-from act_state import ActState
+from .act_state import ActState
 
 class Ability:
     def __init__(self, name, act_type, supply_state, capacity, efficiency, start, stop, recur, every, until, err_rate):
